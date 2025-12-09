@@ -9,7 +9,7 @@ import json
 import sys
 
 # Configuration
-BACKEND_URL = "http://localhost:8000"
+BACKEND_URL = "http://localhost:8001"
 API_ENDPOINT = f"{BACKEND_URL}/route"
 
 def test_health():

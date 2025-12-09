@@ -187,7 +187,7 @@ export default function Journal() {
   const handleEnhanceWithAI = async (entry: JournalEntry) => {
     setEnhancing(true)
     try {
-      const response = await fetch('http://localhost:8000/ai/enhance-journal', {
+      const response = await fetch('http://localhost:8001/ai/enhance-journal', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

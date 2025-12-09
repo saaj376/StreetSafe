@@ -1,6 +1,5 @@
 import { ReactNode } from 'react'
-import { Link, useLocation } from 'react-router-dom'
-import { MapPin, Shield, AlertTriangle, Home as HomeIcon } from 'lucide-react'
+import { useLocation } from 'react-router-dom'
 
 interface LayoutProps {
   children: ReactNode

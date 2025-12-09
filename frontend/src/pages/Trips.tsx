@@ -64,7 +64,7 @@ export default function Trips() {
 
     setItineraryLoading(true)
     try {
-      const response = await fetch('http://localhost:8000/ai/generate-itinerary', {
+      const response = await fetch('http://localhost:8001/ai/generate-itinerary', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -98,7 +98,7 @@ export default function Trips() {
 
     setPackingLoading(true)
     try {
-      const response = await fetch('http://localhost:8000/ai/generate-packing-list', {
+      const response = await fetch('http://localhost:8001/ai/generate-packing-list', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -132,7 +132,7 @@ export default function Trips() {
 
     setPoiLoading(true)
     try {
-      const response = await fetch('http://localhost:8000/ai/search-poi', {
+      const response = await fetch('http://localhost:8001/ai/search-poi', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

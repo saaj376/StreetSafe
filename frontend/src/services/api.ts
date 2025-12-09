@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001'
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -86,6 +86,29 @@ export interface GuardianStatus {
   is_stationary: boolean
 }
 
+export interface HeatmapGeoJSON extends GeoJSON.FeatureCollection {
+  features: GeoJSON.Feature[]
+}
+
+export interface SegmentInfo {
+  segment_id: number
+  road_name?: string
+  avg_rating?: number
+  total_ratings?: number
+}
+
+export interface TagsResponse {
+  positive: string[]
+  negative: string[]
+}
+
+export interface FeedbackRequest {
+  segment_id: number
+  rating: number
+  tags: string[]
+  persona: string
+}
+
 // Routing API
 export const calculateRoute = async (
   mode: string,
@@ -146,6 +169,31 @@ export const deactivateSOS = async (token: string): Promise<void> => {
 // Health check
 export const healthCheck = async (): Promise<any> => {
   const response = await api.get('/')
+  return response.data
+}
+
+// Feedback/Rating API
+export const submitFeedback = async (
+  request: FeedbackRequest
+): Promise<{ message: string }> => {
+  const response = await api.post('/api/feedback', request)
+  return response.data
+}
+
+export const getSegmentInfo = async (
+  segmentId: number
+): Promise<SegmentInfo> => {
+  const response = await api.get<SegmentInfo>(`/api/segment/${segmentId}`)
+  return response.data
+}
+
+export const getAvailableTags = async (): Promise<TagsResponse> => {
+  const response = await api.get<TagsResponse>('/api/tags')
+  return response.data
+}
+
+export const getSafetyHeatmap = async (): Promise<HeatmapGeoJSON> => {
+  const response = await api.get<HeatmapGeoJSON>('/api/heatmap')
   return response.data
 }
 
