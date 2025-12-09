@@ -157,11 +157,11 @@ export default function Trips() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8">
+    <div className="min-h-screen py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">My Trips</h1>
-          <p className="text-gray-600">View, plan, and manage your travel adventures</p>
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">My Trips</h1>
+          <p className="text-gray-600 dark:text-gray-300">View, plan, and manage your travel adventures</p>
         </div>
 
         {/* AI Tools Section */}
@@ -170,7 +170,7 @@ export default function Trips() {
           <div className="card">
             <div className="flex items-center space-x-3 mb-4 pb-4 border-b">
               <Sparkles className="h-6 w-6 text-primary-600" />
-              <h2 className="text-xl font-semibold text-gray-900">AI Itinerary Builder</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">AI Itinerary Builder</h2>
             </div>
 
             {!showItineraryBuilder ? (
@@ -184,7 +184,7 @@ export default function Trips() {
             ) : (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Destination</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Destination</label>
                   <input
                     type="text"
                     value={destination}
@@ -196,7 +196,7 @@ export default function Trips() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Duration (days)</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Duration (days)</label>
                     <input
                       type="number"
                       min="1"
@@ -208,7 +208,7 @@ export default function Trips() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Travel Style</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Travel Style</label>
                     <select
                       value={travelStyle}
                       onChange={(e) => setTravelStyle(e.target.value as any)}
@@ -223,7 +223,7 @@ export default function Trips() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Interests</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Interests</label>
                   <div className="grid grid-cols-2 gap-2">
                     {interestOptions.map((interest) => (
                       <button
@@ -258,20 +258,20 @@ export default function Trips() {
 
                 {itinerary && (
                   <div className="mt-4 pt-4 border-t space-y-3">
-                    <h3 className="font-semibold text-gray-900">Your Itinerary</h3>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">Your Itinerary</h3>
                     <div className="max-h-96 overflow-y-auto space-y-2">
                       {itinerary.map((item, idx) => (
-                        <div key={idx} className="p-3 bg-primary-50 rounded-lg">
+                        <div key={idx} className="p-3 bg-primary-50 dark:bg-navy-800 rounded-lg">
                           <div className="flex items-start justify-between mb-1">
-                            <span className="font-medium text-primary-900">{item.time}</span>
-                            <span className="text-xs text-primary-700">{item.duration}</span>
+                            <span className="font-medium text-primary-900 dark:text-primary-300">{item.time}</span>
+                            <span className="text-xs text-primary-700 dark:text-primary-400">{item.duration}</span>
                           </div>
-                          <p className="text-sm font-semibold text-gray-900">{item.activity}</p>
-                          <p className="text-xs text-gray-600 flex items-center mt-1">
+                          <p className="text-sm font-semibold text-gray-900 dark:text-gray-200">{item.activity}</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 flex items-center mt-1">
                             <MapPin className="h-3 w-3 mr-1" />
                             {item.location}
                           </p>
-                          {item.notes && <p className="text-xs text-gray-700 mt-2">{item.notes}</p>}
+                          {item.notes && <p className="text-xs text-gray-700 dark:text-gray-400 mt-2">{item.notes}</p>}
                         </div>
                       ))}
                     </div>
@@ -291,7 +291,7 @@ export default function Trips() {
           <div className="card">
             <div className="flex items-center space-x-3 mb-4 pb-4 border-b">
               <Package className="h-6 w-6 text-success-600" />
-              <h2 className="text-xl font-semibold text-gray-900">AI Packing Assistant</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">AI Packing Assistant</h2>
             </div>
 
             {!showPackingAssistant ? (
@@ -305,7 +305,7 @@ export default function Trips() {
             ) : (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Destination</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Destination</label>
                   <input
                     type="text"
                     value={packingDestination}
@@ -317,7 +317,7 @@ export default function Trips() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Trip Duration</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Trip Duration</label>
                     <input
                       type="number"
                       min="1"
@@ -329,7 +329,7 @@ export default function Trips() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Weather</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Weather</label>
                     <select
                       value={packingWeather}
                       onChange={(e) => setPackingWeather(e.target.value as any)}
@@ -344,7 +344,7 @@ export default function Trips() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Activities</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Activities</label>
                   <div className="grid grid-cols-2 gap-2">
                     {activityOptions.map((activity) => (
                       <button
@@ -379,14 +379,14 @@ export default function Trips() {
 
                 {packingList && (
                   <div className="mt-4 pt-4 border-t space-y-3">
-                    <h3 className="font-semibold text-gray-900">Packing Checklist</h3>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">Packing Checklist</h3>
                     <div className="max-h-96 overflow-y-auto space-y-3">
                       {packingList.map((category, idx) => (
-                        <div key={idx} className="p-3 bg-success-50 rounded-lg">
-                          <h4 className="font-semibold text-success-900 mb-2">{category.category}</h4>
+                        <div key={idx} className="p-3 bg-success-50 dark:bg-navy-800 rounded-lg">
+                          <h4 className="font-semibold text-success-900 dark:text-success-300 mb-2">{category.category}</h4>
                           <ul className="space-y-1">
                             {category.items.map((item, itemIdx) => (
-                              <li key={itemIdx} className="flex items-center text-sm text-gray-700">
+                              <li key={itemIdx} className="flex items-center text-sm text-gray-700 dark:text-gray-300">
                                 <input type="checkbox" className="mr-2 rounded" />
                                 {item}
                               </li>
@@ -411,8 +411,8 @@ export default function Trips() {
           <div className="card lg:col-span-2">
             <div className="flex items-center space-x-3 mb-4 pb-4 border-b">
               <Search className="h-6 w-6 text-warning-600" />
-              <h2 className="text-xl font-semibold text-gray-900">POI Search</h2>
-              <span className="text-sm text-gray-500">(Restaurants, Attractions, Transport)</span>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">POI Search</h2>
+              <span className="text-sm text-gray-500 dark:text-gray-400">(Restaurants, Attractions, Transport)</span>
             </div>
 
             {!showPOISearch ? (
@@ -427,7 +427,7 @@ export default function Trips() {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Location</label>
                     <input
                       type="text"
                       value={poiLocation}
@@ -438,7 +438,7 @@ export default function Trips() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category</label>
                     <select
                       value={poiType}
                       onChange={(e) => setPoiType(e.target.value as any)}
@@ -485,7 +485,7 @@ export default function Trips() {
 
                 {poiResults && poiResults.length > 0 && (
                   <div className="mt-4 pt-4 border-t">
-                    <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
                       {poiType === 'restaurants' && <Utensils className="h-5 w-5 mr-2 text-warning-600" />}
                       {poiType === 'attractions' && <Camera className="h-5 w-5 mr-2 text-warning-600" />}
                       {poiType === 'transport' && <Train className="h-5 w-5 mr-2 text-warning-600" />}
@@ -493,11 +493,11 @@ export default function Trips() {
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
                       {poiResults.map((poi, idx) => (
-                        <div key={idx} className="p-4 bg-warning-50 border border-warning-200 rounded-lg">
+                        <div key={idx} className="p-4 bg-warning-50 dark:bg-navy-800 border border-warning-200 dark:border-navy-700 rounded-lg">
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex-1">
-                              <h4 className="font-semibold text-gray-900 mb-1">{poi.name}</h4>
-                              <p className="text-sm text-gray-600 mb-2 flex items-start">
+                              <h4 className="font-semibold text-gray-900 dark:text-white mb-1">{poi.name}</h4>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 flex items-start">
                                 <MapPin className="h-3 w-3 mr-1 mt-0.5 flex-shrink-0" />
                                 <span className="line-clamp-2">{poi.address}</span>
                               </p>
@@ -537,7 +537,7 @@ export default function Trips() {
                           {poi.rating && (
                             <div className="flex items-center space-x-2 text-sm">
                               <span className="text-yellow-600">★ {poi.rating}</span>
-                              {poi.distance && <span className="text-gray-500">• {poi.distance}</span>}
+                              {poi.distance && <span className="text-gray-500 dark:text-gray-400">• {poi.distance}</span>}
                             </div>
                           )}
                         </div>
@@ -548,7 +548,7 @@ export default function Trips() {
 
                 {poiResults && poiResults.length === 0 && (
                   <div className="mt-4 pt-4 border-t text-center py-6">
-                    <p className="text-gray-600">No results found for this location</p>
+                    <p className="text-gray-600 dark:text-gray-300">No results found for this location</p>
                   </div>
                 )}
               </div>
@@ -559,8 +559,8 @@ export default function Trips() {
         {/* Empty State for Saved Trips */}
         <div className="card text-center py-12">
           <Route className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">No saved trips yet</h2>
-          <p className="text-gray-600">Use the AI tools above or start planning your first safe route</p>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No saved trips yet</h2>
+          <p className="text-gray-600 dark:text-gray-300">Use the AI tools above or start planning your first safe route</p>
         </div>
       </div>
     </div>

@@ -2,11 +2,11 @@ import { Users, MessageCircle, TrendingUp, AlertTriangle } from 'lucide-react'
 
 export default function Community() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8">
+    <div className="min-h-screen py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Community Safety</h1>
-          <p className="text-gray-600">Connect with others and share safety information</p>
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Community Safety</h1>
+          <p className="text-gray-600 dark:text-gray-300">Connect with others and share safety information</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -16,25 +16,25 @@ export default function Community() {
             <div className="grid grid-cols-3 gap-4">
               <div className="card text-center">
                 <Users className="h-8 w-8 text-primary-600 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-gray-900">1,234</p>
-                <p className="text-xs text-gray-600">Active Users</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">1,234</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">Active Users</p>
               </div>
               <div className="card text-center">
                 <MessageCircle className="h-8 w-8 text-success-600 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-gray-900">567</p>
-                <p className="text-xs text-gray-600">Reports Today</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">567</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">Reports Today</p>
               </div>
               <div className="card text-center">
                 <TrendingUp className="h-8 w-8 text-warning-600 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-gray-900">89%</p>
-                <p className="text-xs text-gray-600">Safe Areas</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">89%</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">Safe Areas</p>
               </div>
             </div>
 
             {/* Community Feed */}
             <div className="card">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Updates</h2>
-              
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Updates</h2>
+
               <div className="space-y-4">
                 {/* Sample Post 1 */}
                 <div className="border-b border-gray-200 pb-4 last:border-0">
@@ -44,11 +44,11 @@ export default function Community() {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-1">
-                        <span className="font-medium text-gray-900">Community Member</span>
-                        <span className="text-xs text-gray-500">2 hours ago</span>
+                        <span className="font-medium text-gray-900 dark:text-white">Community Member</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">2 hours ago</span>
                       </div>
-                      <p className="text-sm text-gray-600 mb-2">
-                        Just completed a safe route through Adyar. Streets were well-lit and felt very secure. 
+                      <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                        Just completed a safe route through Adyar. Streets were well-lit and felt very secure.
                         Recommend for evening travel.
                       </p>
                       <div className="flex items-center space-x-4 text-xs text-gray-500">
@@ -67,11 +67,11 @@ export default function Community() {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-1">
-                        <span className="font-medium text-gray-900">Safety Alert</span>
-                        <span className="text-xs text-gray-500">4 hours ago</span>
+                        <span className="font-medium text-gray-900 dark:text-white">Safety Alert</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">4 hours ago</span>
                         <span className="text-xs bg-warning-100 text-warning-700 px-2 py-0.5 rounded">Alert</span>
                       </div>
-                      <p className="text-sm text-gray-600 mb-2">
+                      <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
                         Construction work reported near Chennai Central. Consider alternate routes during peak hours.
                       </p>
                       <div className="flex items-center space-x-4 text-xs text-gray-500">
@@ -95,8 +95,8 @@ export default function Community() {
           <div className="space-y-6">
             {/* Safety Tips */}
             <div className="card">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Safety Tips</h2>
-              <ul className="space-y-3 text-sm text-gray-600">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Safety Tips</h2>
+              <ul className="space-y-3 text-sm text-gray-600 dark:text-gray-300">
                 <li className="flex items-start space-x-2">
                   <span className="text-success-600 mt-0.5">•</span>
                   <span>Always share your route with trusted contacts</span>
@@ -118,7 +118,7 @@ export default function Community() {
 
             {/* Quick Actions */}
             <div className="card">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h2>
               <div className="space-y-2">
                 <button className="w-full btn btn-primary text-sm">Report an Issue</button>
                 <button className="w-full btn btn-secondary text-sm">Share Safety Tip</button>

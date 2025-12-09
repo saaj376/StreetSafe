@@ -38,7 +38,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null)
   const [backendConnected, setBackendConnected] = useState<boolean | null>(null)
   const [spacebarPresses, setSpacebarPresses] = useState(0)
-  
+
   const monitoringIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const sosIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const startSuggestTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -51,7 +51,7 @@ export default function Home() {
     const lat = searchParams.get('lat')
     const lon = searchParams.get('lon')
     const name = searchParams.get('name')
-    
+
     if (lat && lon) {
       const coordinate: Coordinate = {
         lat: parseFloat(lat),
@@ -112,23 +112,23 @@ export default function Home() {
 
     setLoading(true)
     setError(null)
-    
+
     try {
       console.log(`[FRONTEND] Calculating ${mode} route from (${start.lat}, ${start.lon}) to (${end.lat}, ${end.lon})`)
-      
+
       const response: RouteResponse = await calculateRoute(mode, {
         start_lat: start.lat,
         start_lon: start.lon,
         end_lat: end.lat,
         end_lon: end.lon,
       })
-      
+
       console.log(`[FRONTEND] Route received: ${response.route_coords.length} waypoints, ${response.distance_approx_km} km, mode: ${response.mode_used}`)
-      
+
       if (!response.route_coords || response.route_coords.length === 0) {
         throw new Error('Route calculation returned empty coordinates')
       }
-      
+
       setRoute(response.route_coords)
       setRouteInfo({
         distance: response.distance_approx_km,
@@ -138,13 +138,13 @@ export default function Home() {
         distanceKm: response.distance_approx_km,
         mode,
       })
-      
+
       // Start monitoring if route is active
       startMonitoring(response.route_coords)
     } catch (error: any) {
       console.error('[FRONTEND] Error calculating route:', error)
-      const errorMessage = error.response?.data?.detail 
-        || error.message 
+      const errorMessage = error.response?.data?.detail
+        || error.message
         || 'Failed to calculate route. Please check if the backend server is running.'
       setError(errorMessage)
       setRoute([]) // Clear any previous route
@@ -288,27 +288,27 @@ export default function Home() {
   const handleSpacebarPress = (e: KeyboardEvent) => {
     if (e.code === 'Space' && !sosActive) {
       e.preventDefault()
-      
+
       // Clear previous timeout if exists
       if (spacebarTimeoutRef.current) {
         clearTimeout(spacebarTimeoutRef.current)
       }
-      
+
       // Increment spacebar press count
       setSpacebarPresses(prev => {
         const newCount = prev + 1
-        
+
         // Reset after 2 seconds of inactivity
         spacebarTimeoutRef.current = setTimeout(() => {
           setSpacebarPresses(0)
         }, 2000)
-        
+
         // Trigger SOS on 3rd press
         if (newCount === 3) {
           setSpacebarPresses(0)
           handleActivateSOS()
         }
-        
+
         return newCount
       })
     }
@@ -320,7 +320,7 @@ export default function Home() {
     try {
       setSosActive(false)
       setSosToken(null)
-      
+
       if (sosIntervalRef.current) {
         clearInterval(sosIntervalRef.current)
       }
@@ -360,10 +360,10 @@ export default function Home() {
       <div className="mb-8">
         <div className="flex items-center justify-between mb-2">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
               SafeRoute Planner
             </h1>
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-gray-300">
               Intelligent safety routing with real-time hazard monitoring
             </p>
             <p className="text-sm text-primary-600 mt-1">
@@ -373,7 +373,7 @@ export default function Home() {
           {backendConnected !== null && (
             <div className="flex items-center space-x-2">
               <div className={`h-3 w-3 rounded-full ${backendConnected ? 'bg-success-500' : 'bg-danger-500'}`} />
-              <span className="text-sm text-gray-600">
+              <span className="text-sm text-gray-600 dark:text-gray-300">
                 {backendConnected ? 'Backend Connected' : 'Backend Offline'}
               </span>
             </div>
@@ -470,13 +470,13 @@ export default function Home() {
                     className={clsx(
                       'p-4 rounded-lg border-2 transition-all text-left',
                       mode === option.value
-                        ? 'border-primary-500 bg-primary-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-primary-500 bg-primary-50 dark:bg-navy-800'
+                        : 'border-gray-200 hover:border-gray-300 dark:border-navy-700 dark:hover:border-navy-600'
                     )}
                   >
                     <Icon className="h-5 w-5 mb-2 text-primary-600" />
-                    <div className="font-medium text-sm">{option.label}</div>
-                    <div className="text-xs text-gray-500 mt-1">{option.description}</div>
+                    <div className="font-medium text-sm dark:text-gray-200">{option.label}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{option.description}</div>
                   </button>
                 )
               })}
@@ -488,7 +488,7 @@ export default function Home() {
             <h2 className="text-lg font-semibold mb-4">Route Points</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Start Point
                 </label>
                 <div className="flex space-x-2">
@@ -564,14 +564,14 @@ export default function Home() {
                   </button>
                 )}
                 {start && (
-                  <p className="mt-1 text-sm text-gray-600">
+                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                     ✓ Set to ({start.lat.toFixed(4)}, {start.lon.toFixed(4)})
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   End Point
                 </label>
                 <div className="flex space-x-2">
@@ -635,7 +635,7 @@ export default function Home() {
                   </button>
                 </div>
                 {end && (
-                  <p className="mt-1 text-sm text-gray-600">
+                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                     ✓ Set to ({end.lat.toFixed(4)}, {end.lon.toFixed(4)})
                   </p>
                 )}
@@ -697,11 +697,11 @@ export default function Home() {
                   <AlertTriangle className="h-5 w-5 inline mr-2" />
                   Activate SOS
                 </button>
-                <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <p className="text-sm text-blue-700 font-semibold">⌨️ Quick Emergency Trigger</p>
-                  <p className="text-xs text-blue-600 mt-1">Press SPACEBAR 3 times rapidly to activate SOS in case of emergency</p>
+                <div className="p-3 bg-blue-50 dark:bg-navy-800 rounded-lg border border-blue-200 dark:border-navy-700">
+                  <p className="text-sm text-blue-700 dark:text-blue-300 font-semibold">⌨️ Quick Emergency Trigger</p>
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Press SPACEBAR 3 times rapidly to activate SOS in case of emergency</p>
                   {spacebarPresses > 0 && (
-                    <p className="text-xs text-blue-700 mt-2 font-semibold">
+                    <p className="text-xs text-blue-700 dark:text-blue-300 mt-2 font-semibold">
                       Spacebar presses: {spacebarPresses}/3
                     </p>
                   )}
