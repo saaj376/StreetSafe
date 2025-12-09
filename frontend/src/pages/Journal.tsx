@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Book, Plus, Calendar, Sparkles, X, Loader, Image as ImageIcon, CheckCircle, DollarSign, Trash2 } from 'lucide-react'
+import { Book, Plus, Calendar, Sparkles, X, Loader, Image as ImageIcon, CheckCircle, DollarSign, Trash2, Volume2, VolumeX, Pause, Play, Film } from 'lucide-react'
 
 interface JournalEntry {
   id: string
@@ -9,6 +9,15 @@ interface JournalEntry {
   photos: string[]
   enhanced: boolean
   enhancedContent?: string
+  tripName?: string
+}
+
+interface Trip {
+  id: string
+  name: string
+  startDate: string
+  endDate?: string
+  description?: string
 }
 
 interface Expense {
@@ -21,11 +30,15 @@ interface Expense {
 
 const STORAGE_KEY = 'journal_entries'
 const EXPENSES_STORAGE_KEY = 'travel_expenses'
+const TRIPS_STORAGE_KEY = 'travel_trips'
 
 export default function Journal() {
   const [showNewEntry, setShowNewEntry] = useState(false)
   const [entries, setEntries] = useState<JournalEntry[]>([])
+  const [trips, setTrips] = useState<Trip[]>([])
   const [activeTab, setActiveTab] = useState<'journal' | 'expenses'>('journal')
+  const [selectedTrip, setSelectedTrip] = useState<string>('all')
+  const [showNewTrip, setShowNewTrip] = useState(false)
   
   // Form states for journal
   const [title, setTitle] = useState('')
@@ -33,6 +46,11 @@ export default function Journal() {
   const [photos, setPhotos] = useState<string[]>([])
   const [enhancing, setEnhancing] = useState(false)
   const [showEnhancedView, setShowEnhancedView] = useState(false)
+  const [selectedTripForEntry, setSelectedTripForEntry] = useState<string>('')
+  
+  // Form states for trips
+  const [tripName, setTripName] = useState('')
+  const [tripDescription, setTripDescription] = useState('')
   
   // Form states for expenses
   const [showNewExpense, setShowNewExpense] = useState(false)
@@ -41,6 +59,20 @@ export default function Journal() {
   const [expenseDescription, setExpenseDescription] = useState('')
   const [expenseAmount, setExpenseAmount] = useState('')
   const [selectedExpenseDate, setSelectedExpenseDate] = useState<string>('')
+  
+  // Audio playback states
+  const [playingEntryId, setPlayingEntryId] = useState<string | null>(null)
+  const [isPaused, setIsPaused] = useState(false)
+  const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null)
+  
+  // Video playback states
+  const [showVideoPlayer, setShowVideoPlayer] = useState(false)
+  const [videoPlaying, setVideoPlaying] = useState(false)
+  const [currentEntryIndex, setCurrentEntryIndex] = useState(0)
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0)
+  const [videoProgress, setVideoProgress] = useState(0)
+  const videoTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const progressTimerRef = useRef<NodeJS.Timeout | null>(null)
   
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -63,6 +95,15 @@ export default function Journal() {
         console.error('Error loading expenses from cache:', error)
       }
     }
+
+    const savedTrips = localStorage.getItem(TRIPS_STORAGE_KEY)
+    if (savedTrips) {
+      try {
+        setTrips(JSON.parse(savedTrips))
+      } catch (error) {
+        console.error('Error loading trips from cache:', error)
+      }
+    }
   }, [])
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,6 +123,32 @@ export default function Journal() {
     setPhotos(prev => prev.filter((_, i) => i !== index))
   }
 
+  const handleSaveTrip = () => {
+    if (!tripName.trim()) {
+      alert('Please enter a trip name')
+      return
+    }
+
+    const newTrip: Trip = {
+      id: Date.now().toString(),
+      name: tripName,
+      startDate: new Date().toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+      }),
+      description: tripDescription
+    }
+
+    const updatedTrips = [...trips, newTrip]
+    setTrips(updatedTrips)
+    localStorage.setItem(TRIPS_STORAGE_KEY, JSON.stringify(updatedTrips))
+
+    setTripName('')
+    setTripDescription('')
+    setShowNewTrip(false)
+  }
+
   const handleSaveEntry = () => {
     if (!title.trim() || !content.trim()) {
       alert('Please enter both title and content')
@@ -99,7 +166,8 @@ export default function Journal() {
       content,
       photos,
       enhanced: false,
-      enhancedContent: ''
+      enhancedContent: '',
+      tripName: selectedTripForEntry || undefined
     }
 
     const updatedEntries = [newEntry, ...entries]
@@ -112,6 +180,7 @@ export default function Journal() {
     setTitle('')
     setContent('')
     setPhotos([])
+    setSelectedTripForEntry('')
     setShowNewEntry(false)
   }
 
@@ -206,6 +275,30 @@ export default function Journal() {
     localStorage.setItem(EXPENSES_STORAGE_KEY, JSON.stringify(updatedExpenses))
   }
 
+  const getFilteredEntries = () => {
+    if (selectedTrip === 'all') {
+      return entries
+    }
+    if (selectedTrip === 'unassigned') {
+      return entries.filter(entry => !entry.tripName)
+    }
+    return entries.filter(entry => entry.tripName === selectedTrip)
+  }
+
+  const getEntriesByTrip = () => {
+    const tripGroups: { [key: string]: JournalEntry[] } = {}
+    
+    entries.forEach(entry => {
+      const tripKey = entry.tripName || 'Unassigned'
+      if (!tripGroups[tripKey]) {
+        tripGroups[tripKey] = []
+      }
+      tripGroups[tripKey].push(entry)
+    })
+    
+    return tripGroups
+  }
+
   const getTotalExpenses = () => expenses.reduce((sum, exp) => sum + exp.amount, 0)
   
   const getExpensesByCategory = () => {
@@ -282,6 +375,211 @@ export default function Journal() {
     })
   }
 
+  // Audio playback functions
+  const handlePlayAudio = (entry: JournalEntry) => {
+    // Stop any currently playing audio
+    if (playingEntryId) {
+      window.speechSynthesis.cancel()
+    }
+
+    // If clicking the same entry that's playing, stop it
+    if (playingEntryId === entry.id && !isPaused) {
+      setPlayingEntryId(null)
+      setIsPaused(false)
+      return
+    }
+
+    // Resume if paused
+    if (isPaused && playingEntryId === entry.id) {
+      window.speechSynthesis.resume()
+      setIsPaused(false)
+      return
+    }
+
+    // Create new speech synthesis
+    const textToRead = entry.enhanced && entry.enhancedContent 
+      ? `${entry.title}. ${entry.enhancedContent}` 
+      : `${entry.title}. ${entry.content}`
+    
+    const utterance = new SpeechSynthesisUtterance(textToRead)
+    utterance.rate = 0.9 // Slightly slower for better listening
+    utterance.pitch = 1
+    utterance.volume = 1
+
+    utterance.onend = () => {
+      setPlayingEntryId(null)
+      setIsPaused(false)
+    }
+
+    utterance.onerror = () => {
+      setPlayingEntryId(null)
+      setIsPaused(false)
+      alert('Audio playback failed. Please try again.')
+    }
+
+    speechSynthesisRef.current = utterance
+    setPlayingEntryId(entry.id)
+    setIsPaused(false)
+    window.speechSynthesis.speak(utterance)
+  }
+
+  const handlePauseAudio = () => {
+    if (playingEntryId && !isPaused) {
+      window.speechSynthesis.pause()
+      setIsPaused(true)
+    }
+  }
+
+  const handleStopAudio = () => {
+    window.speechSynthesis.cancel()
+    setPlayingEntryId(null)
+    setIsPaused(false)
+  }
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      window.speechSynthesis.cancel()
+      if (videoTimerRef.current) {
+        clearInterval(videoTimerRef.current)
+      }
+      if (progressTimerRef.current) {
+        clearInterval(progressTimerRef.current)
+      }
+    }
+  }, [])
+
+  // Video compilation functions
+  const playEntryInVideo = (entryIndex: number) => {
+    const filteredEntries = getFilteredEntries()
+    if (entryIndex >= filteredEntries.length) {
+      // All entries played, show completion
+      setVideoPlaying(false)
+      return
+    }
+
+    const entry = filteredEntries[entryIndex]
+    setCurrentEntryIndex(entryIndex)
+    setCurrentPhotoIndex(0)
+    setVideoProgress((entryIndex / filteredEntries.length) * 100)
+
+    // Create intro text with title and date
+    const introText = `Memory ${entryIndex + 1}. ${entry.title}. Recorded on ${entry.date}.`
+    const mainText = entry.enhanced && entry.enhancedContent 
+      ? entry.enhancedContent 
+      : entry.content
+
+    // Speak intro first
+    const introUtterance = new SpeechSynthesisUtterance(introText)
+    introUtterance.rate = 0.9
+    introUtterance.pitch = 1.1
+    introUtterance.volume = 1
+
+    introUtterance.onend = () => {
+      // After intro, speak main content
+      const mainUtterance = new SpeechSynthesisUtterance(mainText)
+      mainUtterance.rate = 0.85
+      mainUtterance.pitch = 1
+      mainUtterance.volume = 1
+
+      mainUtterance.onend = () => {
+        // Move to next entry after a brief pause
+        setTimeout(() => {
+          if (videoPlaying) {
+            playEntryInVideo(entryIndex + 1)
+          }
+        }, 2000)
+      }
+
+      mainUtterance.onerror = () => {
+        playEntryInVideo(entryIndex + 1)
+      }
+
+      window.speechSynthesis.speak(mainUtterance)
+
+      // Photo slideshow for this entry
+      if (entry.photos.length > 0) {
+        let photoIndex = 0
+        if (videoTimerRef.current) {
+          clearInterval(videoTimerRef.current)
+        }
+        videoTimerRef.current = setInterval(() => {
+          photoIndex = (photoIndex + 1) % entry.photos.length
+          setCurrentPhotoIndex(photoIndex)
+        }, 4000)
+      }
+    }
+
+    window.speechSynthesis.speak(introUtterance)
+  }
+
+  const handlePlayCompilation = () => {
+    const filteredEntries = getFilteredEntries()
+    if (filteredEntries.length === 0) {
+      alert('No journal entries to play. Create some entries first!')
+      return
+    }
+
+    setShowVideoPlayer(true)
+    setVideoPlaying(true)
+    setCurrentEntryIndex(0)
+    setCurrentPhotoIndex(0)
+    setVideoProgress(0)
+
+    // Start playing from first entry
+    playEntryInVideo(0)
+  }
+
+  const handlePauseVideo = () => {
+    if (videoPlaying) {
+      window.speechSynthesis.pause()
+      if (videoTimerRef.current) {
+        clearInterval(videoTimerRef.current)
+      }
+      setVideoPlaying(false)
+    } else {
+      window.speechSynthesis.resume()
+      // Resume photo slideshow
+      const filteredEntries = getFilteredEntries()
+      const currentEntry = filteredEntries[currentEntryIndex]
+      if (currentEntry && currentEntry.photos.length > 0) {
+        let photoIndex = currentPhotoIndex
+        videoTimerRef.current = setInterval(() => {
+          photoIndex = (photoIndex + 1) % currentEntry.photos.length
+          setCurrentPhotoIndex(photoIndex)
+        }, 4000)
+      }
+      setVideoPlaying(true)
+    }
+  }
+
+  const handleCloseVideo = () => {
+    window.speechSynthesis.cancel()
+    if (videoTimerRef.current) {
+      clearInterval(videoTimerRef.current)
+    }
+    if (progressTimerRef.current) {
+      clearInterval(progressTimerRef.current)
+    }
+    setShowVideoPlayer(false)
+    setVideoPlaying(false)
+    setCurrentEntryIndex(0)
+    setCurrentPhotoIndex(0)
+    setVideoProgress(0)
+  }
+
+  const handleSkipToNext = () => {
+    window.speechSynthesis.cancel()
+    playEntryInVideo(currentEntryIndex + 1)
+  }
+
+  const handleSkipToPrevious = () => {
+    if (currentEntryIndex > 0) {
+      window.speechSynthesis.cancel()
+      playEntryInVideo(currentEntryIndex - 1)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-white py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -295,13 +593,35 @@ export default function Journal() {
               </h1>
               <p className="text-gray-600">Document your travel stories, memories, and track expenses</p>
             </div>
-            <button
-              onClick={() => activeTab === 'journal' ? setShowNewEntry(!showNewEntry) : setShowNewExpense(!showNewExpense)}
-              className="btn btn-primary"
-            >
-              <Plus className="h-5 w-5 mr-2" />
-              {activeTab === 'journal' ? 'New Entry' : 'Add Expense'}
-            </button>
+            <div className="flex items-center space-x-3">
+              {activeTab === 'journal' && (
+                <>
+                  {getFilteredEntries().length > 0 && (
+                    <button
+                      onClick={handlePlayCompilation}
+                      className="btn bg-gradient-to-r from-blue-600 to-cyan-600 text-white hover:shadow-xl transition-all"
+                    >
+                      <Film className="h-5 w-5 mr-2" />
+                      Play All Memories
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setShowNewTrip(true)}
+                    className="btn bg-purple-600 text-white hover:bg-purple-700"
+                  >
+                    <Plus className="h-5 w-5 mr-2" />
+                    New Trip
+                  </button>
+                </>
+              )}
+              <button
+                onClick={() => activeTab === 'journal' ? setShowNewEntry(!showNewEntry) : setShowNewExpense(!showNewExpense)}
+                className="btn btn-primary"
+              >
+                <Plus className="h-5 w-5 mr-2" />
+                {activeTab === 'journal' ? 'New Entry' : 'Add Expense'}
+              </button>
+            </div>
           </div>
 
           {/* Tab Navigation */}
@@ -334,6 +654,97 @@ export default function Journal() {
         {/* Journal Tab Content */}
         {activeTab === 'journal' && (
           <>
+        {/* New Trip Form */}
+        {showNewTrip && (
+          <div className="card mb-8 border-2 border-purple-200 bg-white shadow-lg">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Create New Trip</h2>
+              <button
+                onClick={() => setShowNewTrip(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Trip Name
+              </label>
+              <input
+                type="text"
+                value={tripName}
+                onChange={(e) => setTripName(e.target.value)}
+                placeholder="e.g., Chennai Summer Adventure, Goa Beach Trip"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+              />
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Description (Optional)
+              </label>
+              <textarea
+                value={tripDescription}
+                onChange={(e) => setTripDescription(e.target.value)}
+                placeholder="Brief description of your trip..."
+                rows={3}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none resize-none"
+              />
+            </div>
+
+            <button
+              onClick={handleSaveTrip}
+              className="w-full btn bg-purple-600 text-white hover:bg-purple-700"
+            >
+              <CheckCircle className="h-5 w-5 mr-2" />
+              Create Trip
+            </button>
+          </div>
+        )}
+
+        {/* Trip Filter */}
+        {trips.length > 0 && (
+          <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg">
+            <label className="block text-sm font-semibold text-gray-700 mb-3">Filter by Trip</label>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => setSelectedTrip('all')}
+                className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                  selectedTrip === 'all'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                All Entries
+              </button>
+              {trips.map((trip) => (
+                <button
+                  key={trip.id}
+                  onClick={() => setSelectedTrip(trip.name)}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                    selectedTrip === trip.name
+                      ? 'bg-purple-600 text-white shadow-md'
+                      : 'bg-white text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  {trip.name}
+                </button>
+              ))}
+              <button
+                onClick={() => setSelectedTrip('unassigned')}
+                className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                  selectedTrip === 'unassigned'
+                    ? 'bg-gray-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                Unassigned
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* New Entry Form */}
         {showNewEntry && (
           <div className="card mb-8 border-2 border-blue-200 bg-white shadow-lg">
@@ -346,6 +757,27 @@ export default function Journal() {
                 <X className="h-6 w-6" />
               </button>
             </div>
+
+            {/* Trip Selection */}
+            {trips.length > 0 && (
+              <div className="mb-4">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Assign to Trip (Optional)
+                </label>
+                <select
+                  value={selectedTripForEntry}
+                  onChange={(e) => setSelectedTripForEntry(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                >
+                  <option value="">No Trip (Daily Entry)</option>
+                  {trips.map((trip) => (
+                    <option key={trip.id} value={trip.name}>
+                      {trip.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* Title Input */}
             <div className="mb-4">
@@ -448,14 +880,35 @@ export default function Journal() {
               Create First Entry
             </button>
           </div>
+        ) : getFilteredEntries().length === 0 ? (
+          <div className="card text-center py-16 border-2 border-dashed border-blue-200">
+            <Book className="h-16 w-16 text-blue-300 mx-auto mb-4" />
+            <h2 className="text-2xl font-semibold text-gray-900 mb-2">No entries for this filter</h2>
+            <p className="text-gray-600 mb-8">
+              Try selecting a different trip or create a new entry
+            </p>
+            <button
+              onClick={() => setSelectedTrip('all')}
+              className="btn btn-primary mx-auto"
+            >
+              Show All Entries
+            </button>
+          </div>
         ) : (
           <div className="space-y-6">
-            {entries.map((entry) => (
+            {getFilteredEntries().map((entry) => (
               <div key={entry.id} className="card border-l-4 border-blue-500 shadow-lg hover:shadow-xl transition-shadow">
                 {/* Entry Header */}
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
-                    <h3 className="text-xl font-bold text-gray-900 mb-1">{entry.title}</h3>
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="text-xl font-bold text-gray-900">{entry.title}</h3>
+                      {entry.tripName && (
+                        <span className="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full">
+                          {entry.tripName}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm text-gray-500 flex items-center">
                       <Calendar className="h-4 w-4 mr-2" />
                       {entry.date}
@@ -496,8 +949,49 @@ export default function Journal() {
                   </div>
                 )}
 
-                {/* AI Enhance Button */}
-                <div className="flex items-center space-x-2 pt-4 border-t border-gray-200">
+                {/* Action Buttons */}
+                <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                  <div className="flex items-center space-x-2">
+                    {/* Audio Playback Controls */}
+                    {playingEntryId === entry.id ? (
+                      <div className="flex items-center space-x-2">
+                        {isPaused ? (
+                          <button
+                            onClick={() => handlePlayAudio(entry)}
+                            className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-all"
+                          >
+                            <Volume2 className="h-4 w-4" />
+                            <span>Resume</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={handlePauseAudio}
+                            className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-all"
+                          >
+                            <Pause className="h-4 w-4" />
+                            <span>Pause</span>
+                          </button>
+                        )}
+                        <button
+                          onClick={handleStopAudio}
+                          className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-all"
+                        >
+                          <VolumeX className="h-4 w-4" />
+                          <span>Stop</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => handlePlayAudio(entry)}
+                        className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-medium hover:shadow-lg transition-all"
+                      >
+                        <Volume2 className="h-4 w-4" />
+                        <span>Listen to Entry</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* AI Enhance Button */}
                   <button
                     onClick={() => handleEnhanceWithAI(entry)}
                     disabled={enhancing || entry.enhanced}
@@ -812,6 +1306,160 @@ export default function Journal() {
           </>
         )}
       </div>
+
+      {/* Video Compilation Player Modal */}
+      {showVideoPlayer && getFilteredEntries().length > 0 && (
+        <div className="fixed inset-0 bg-black bg-opacity-95 z-50 flex items-center justify-center p-4">
+          <div className="relative w-full max-w-6xl">
+            {/* Close Button */}
+            <button
+              onClick={handleCloseVideo}
+              className="absolute top-4 right-4 z-10 p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full transition-all"
+            >
+              <X className="h-6 w-6 text-white" />
+            </button>
+
+            {/* Video Content */}
+            <div className="bg-gradient-to-br from-purple-900 via-blue-900 to-pink-900 rounded-2xl shadow-2xl overflow-hidden">
+              {/* Title Bar */}
+              <div className="bg-black bg-opacity-40 px-8 py-6 border-b border-white border-opacity-20">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-3xl font-bold text-white mb-2">{getFilteredEntries()[currentEntryIndex]?.title}</h2>
+                    <p className="text-blue-200 flex items-center">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      {getFilteredEntries()[currentEntryIndex]?.date}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-white text-sm opacity-80">
+                      {selectedTrip !== 'all' ? `${selectedTrip} Memories` : 'Memory Compilation'}
+                    </p>
+                    <p className="text-2xl font-bold text-white">
+                      {currentEntryIndex + 1} / {getFilteredEntries().length}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Main Content Area */}
+              <div className="relative h-96 md:h-[32rem] flex items-center justify-center overflow-hidden">
+                {/* Background Image with Ken Burns Effect */}
+                {getFilteredEntries()[currentEntryIndex]?.photos.length > 0 ? (
+                  <div className="absolute inset-0">
+                    <img
+                      src={getFilteredEntries()[currentEntryIndex].photos[currentPhotoIndex]}
+                      alt="Memory"
+                      className="w-full h-full object-cover transition-transform duration-[4000ms] ease-in-out"
+                      style={{
+                        transform: videoPlaying ? 'scale(1.1)' : 'scale(1)',
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black opacity-60"></div>
+                  </div>
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-800 via-blue-800 to-pink-800 animate-gradient"></div>
+                )}
+
+                {/* Text Overlay */}
+                <div className="relative z-10 max-w-4xl mx-auto px-8 text-center">
+                  <div className="bg-black bg-opacity-50 backdrop-blur-md rounded-2xl p-8 border border-white border-opacity-20 transition-all duration-500">
+                    <p className="text-white text-xl md:text-2xl leading-relaxed font-light">
+                      {getFilteredEntries()[currentEntryIndex]?.enhanced && getFilteredEntries()[currentEntryIndex]?.enhancedContent 
+                        ? getFilteredEntries()[currentEntryIndex].enhancedContent 
+                        : getFilteredEntries()[currentEntryIndex]?.content}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Photo Counter */}
+                {getFilteredEntries()[currentEntryIndex]?.photos.length > 1 && (
+                  <div className="absolute bottom-4 right-4 bg-black bg-opacity-60 text-white px-4 py-2 rounded-full text-sm font-medium">
+                    Photo {currentPhotoIndex + 1} of {getFilteredEntries()[currentEntryIndex].photos.length}
+                  </div>
+                )}
+
+                {/* Entry Counter Badge */}
+                <div className="absolute top-4 left-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-6 py-3 rounded-full font-bold text-lg shadow-lg">
+                  Memory {currentEntryIndex + 1} of {getFilteredEntries().length}
+                </div>
+              </div>
+
+              {/* Progress Bar & Controls */}
+              <div className="bg-black bg-opacity-40 px-8 py-4">
+                <div className="w-full bg-gray-700 rounded-full h-2 mb-4 overflow-hidden">
+                  <div 
+                    className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-1000"
+                    style={{ width: `${videoProgress}%` }}
+                  ></div>
+                </div>
+
+                {/* Controls */}
+                <div className="flex items-center justify-center space-x-3">
+                  <button
+                    onClick={handleSkipToPrevious}
+                    disabled={currentEntryIndex === 0}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-all ${
+                      currentEntryIndex === 0
+                        ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                        : 'bg-white bg-opacity-20 hover:bg-opacity-30 text-white'
+                    }`}
+                  >
+                    <span>← Previous</span>
+                  </button>
+                  
+                  <button
+                    onClick={handlePauseVideo}
+                    className="flex items-center space-x-2 px-6 py-3 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-lg font-medium transition-all"
+                  >
+                    {videoPlaying ? (
+                      <>
+                        <Pause className="h-5 w-5" />
+                        <span>Pause</span>
+                      </>
+                    ) : (
+                      <>
+                        <Play className="h-5 w-5" />
+                        <span>Resume</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={handleSkipToNext}
+                    disabled={currentEntryIndex === getFilteredEntries().length - 1}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-all ${
+                      currentEntryIndex === getFilteredEntries().length - 1
+                        ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                        : 'bg-white bg-opacity-20 hover:bg-opacity-30 text-white'
+                    }`}
+                  >
+                    <span>Next →</span>
+                  </button>
+                  
+                  <button
+                    onClick={handleCloseVideo}
+                    className="flex items-center space-x-2 px-6 py-3 bg-blue-600 bg-opacity-80 hover:bg-opacity-100 text-white rounded-lg font-medium transition-all"
+                  >
+                    <X className="h-5 w-5" />
+                    <span>Close</span>
+                  </button>
+                </div>
+
+                {/* Enhanced Badge */}
+                {getFilteredEntries()[currentEntryIndex]?.enhanced && (
+                  <div className="flex items-center justify-center mt-4">
+                    <div className="flex items-center space-x-2 bg-blue-500 bg-opacity-50 text-white px-4 py-2 rounded-full text-sm">
+                      <Sparkles className="h-4 w-4" />
+                      <span>AI Enhanced Memory</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
