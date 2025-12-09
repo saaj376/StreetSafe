@@ -14,7 +14,12 @@ router = APIRouter(
 )
 
 # Gemini API Configuration
-GEMINI_API_KEY = "AIzaSyCRPayA3os7vmk2vJpwxkmg7zVMLl5Dt5g"
+import os
+
+# Gemini API Configuration
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if not GEMINI_API_KEY:
+    print("WARNING: GEMINI_API_KEY not found in environment variables. AI features will fail.")
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
 
 # --- REQUEST MODELS ---

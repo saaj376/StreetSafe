@@ -3,6 +3,11 @@
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 from datetime import datetime
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from .env file
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 # --- IMPORT SERVICES & INITIALIZERS ---
 from services.riskscoreservice import load_risk_and_graph_data, get_graph 
