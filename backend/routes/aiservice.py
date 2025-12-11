@@ -14,7 +14,7 @@ router = APIRouter(
 )
 
 # Gemini API Configuration
-GEMINI_API_KEY = "AIzaSyD9VG9SD-LoC41UDFj5MbD9uV10WDmBGfU"
+GEMINI_API_KEY = ""
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent"
 
 
