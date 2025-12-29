@@ -20,6 +20,11 @@ from routes import aiservice, routingservice, sosservice, safetyalertservice
 
 app = FastAPI(title="StreetSafe API", description="Safe routing for pedestrians")
 
+@app.on_event("startup")
+async def startup_event():
+    from services.riskscoreservice import load_risk_and_graph_data
+    load_risk_and_graph_data()
+
 # Geoapify API Configuration
 GEOAPIFY_API_KEY = "850a27a332bf474a9c0646d7ee8df85b"
 GEOAPIFY_GEOCODE_URL = "https://api.geoapify.com/v1/geocode/search"

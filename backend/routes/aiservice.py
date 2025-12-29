@@ -6,6 +6,11 @@ from typing import List, Optional
 import requests
 import json
 import traceback
+import os
+import google.generativeai as genai
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Define the router
 router = APIRouter(
@@ -14,9 +19,9 @@ router = APIRouter(
 )
 
 # Gemini API Configuration
-GEMINI_API_KEY = ""
-GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent"
-
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
 
 # --- REQUEST MODELS ---
 
@@ -78,97 +83,30 @@ class POISearchResponse(BaseModel):
 
 def call_gemini_api(prompt: str) -> str:
     """
-    Calls the Gemini API with the given prompt and returns the text response.
-    Includes retry logic and extended timeout.
+    Calls the Gemini API using the official google-generativeai library.
     """
-    max_retries = 2
-    timeout_seconds = 60  # Increased from 30 to 60 seconds
-    
-    for attempt in range(max_retries):
-        try:
-            payload = {
-                "contents": [{
-                    "parts": [{
-                        "text": prompt
-                    }]
-                }],
-                "generationConfig": {
-                    "temperature": 0.7,
-                    "topK": 40,
-                    "topP": 0.95,
-                }
-            }
-            
-            print(f"[GEMINI] Attempt {attempt + 1}/{max_retries}: Calling API with prompt length: {len(prompt)}")
-            print(f"[GEMINI] API URL: {GEMINI_API_URL}?key={GEMINI_API_KEY[:10]}...")
-            print(f"[GEMINI] Timeout: {timeout_seconds} seconds")
-            
-            response = requests.post(
-                f"{GEMINI_API_URL}?key={GEMINI_API_KEY}",
-                json=payload,
-                timeout=timeout_seconds
-            )
-            
-            print(f"[GEMINI] Response status: {response.status_code}")
-            print(f"[GEMINI] Response text: {response.text[:500]}")
-            
-            if response.status_code != 200:
-                error_msg = response.text
-                print(f"[GEMINI] Error {response.status_code}: {error_msg}")
-                
-                # If rate-limited on first attempt, return 429 for fallback
-                if response.status_code == 429:
-                    raise HTTPException(
-                        status_code=429,
-                        detail="API rate limited"
-                    )
-                
-                raise HTTPException(
-                    status_code=response.status_code,
-                    detail=f"Gemini API error {response.status_code}: {error_msg}"
-                )
-            
-            data = response.json()
-            
-            if "candidates" not in data or not data["candidates"]:
-                raise HTTPException(
-                    status_code=500,
-                    detail="Invalid Gemini API response: no candidates"
-                )
-            
-            content = data["candidates"][0]["content"]["parts"][0]["text"]
-            print(f"[GEMINI] Successfully received response")
-            return content
-            
-        except requests.exceptions.Timeout as e:
-            print(f"[GEMINI] Timeout on attempt {attempt + 1}: {str(e)}")
-            if attempt < max_retries - 1:
-                print(f"[GEMINI] Retrying...")
-                continue
-            else:
-                print(f"[GEMINI] Max retries reached, using fallback")
-                raise HTTPException(
-                    status_code=504,
-                    detail="API request timed out after retries"
-                )
-        except requests.exceptions.RequestException as e:
-            print(f"[GEMINI] Request error on attempt {attempt + 1}: {str(e)}")
-            if attempt < max_retries - 1:
-                print(f"[GEMINI] Retrying...")
-                continue
-            else:
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"API request failed: {str(e)}"
-                )
-        except HTTPException:
-            raise
-        except (KeyError, IndexError) as e:
-            print(f"[GEMINI] Response parsing error: {str(e)}")
-            raise HTTPException(
-                status_code=500,
-                detail="Failed to parse API response"
-            )
+    if not GEMINI_API_KEY:
+        print("[GEMINI] No API KEY provided")
+        raise HTTPException(status_code=500, detail="Gemini API key not configured")
+        
+    try:
+        print(f"[GEMINI] Generating content with prompt length: {len(prompt)}")
+        model = genai.GenerativeModel('gemini-pro')
+        response = model.generate_content(prompt)
+        
+        print(f"[GEMINI] Successfully received response")
+        return response.text
+        
+    except Exception as e:
+        print(f"[GEMINI] Error: {str(e)}")
+        # Check for rate limits or other specific errors if needed
+        if "429" in str(e):
+             raise HTTPException(status_code=429, detail="API rate limited")
+             
+        raise HTTPException(
+            status_code=500,
+            detail=f"Gemini API error: {str(e)}"
+        )
 
 def extract_json(text: str):
     """

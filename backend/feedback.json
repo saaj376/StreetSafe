@@ -1728,5 +1728,85 @@
     "persona": "walker",
     "trust_weight": 1.0,
     "comment": ""
+  },
+  {
+    "segment_id": 152033,
+    "rating": 5,
+    "tags": [],
+    "timestamp": 1767014877,
+    "time_of_day": "evening",
+    "persona": "walker",
+    "trust_weight": 1.0,
+    "comment": ""
+  },
+  {
+    "segment_id": 11789,
+    "rating": 5,
+    "tags": [],
+    "timestamp": 1767014889,
+    "time_of_day": "evening",
+    "persona": "walker",
+    "trust_weight": 1.0,
+    "comment": ""
+  },
+  {
+    "segment_id": 149540,
+    "rating": 5,
+    "tags": [],
+    "timestamp": 1767014906,
+    "time_of_day": "evening",
+    "persona": "walker",
+    "trust_weight": 1.0,
+    "comment": ""
+  },
+  {
+    "segment_id": 149539,
+    "rating": 5,
+    "tags": [],
+    "timestamp": 1767014924,
+    "time_of_day": "evening",
+    "persona": "walker",
+    "trust_weight": 1.0,
+    "comment": ""
+  },
+  {
+    "segment_id": 144036,
+    "rating": 5,
+    "tags": [],
+    "timestamp": 1767014942,
+    "time_of_day": "evening",
+    "persona": "walker",
+    "trust_weight": 1.0,
+    "comment": ""
+  },
+  {
+    "segment_id": 148876,
+    "rating": 5,
+    "tags": [],
+    "timestamp": 1767014961,
+    "time_of_day": "evening",
+    "persona": "walker",
+    "trust_weight": 1.0,
+    "comment": ""
+  },
+  {
+    "segment_id": 1789,
+    "rating": 5,
+    "tags": [],
+    "timestamp": 1767014981,
+    "time_of_day": "evening",
+    "persona": "walker",
+    "trust_weight": 1.0,
+    "comment": ""
+  },
+  {
+    "segment_id": 1791,
+    "rating": 5,
+    "tags": [],
+    "timestamp": 1767014997,
+    "time_of_day": "evening",
+    "persona": "walker",
+    "trust_weight": 1.0,
+    "comment": ""
   }
 ]
